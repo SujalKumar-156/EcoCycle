@@ -206,3 +206,97 @@ SHOW TABLES;
 DESCRIBE Pickup_Requests;
 DESCRIBE Pickup_Assignments;
 DESCRIBE Inventory;
+
+
+
+USE EcoCycle;
+
+-- 12. SHIPMENTS
+CREATE TABLE Shipments (
+    shipment_id INT AUTO_INCREMENT PRIMARY KEY,
+    centre_id INT NOT NULL,
+    facility_id INT NOT NULL,
+    item_id INT NOT NULL UNIQUE,
+    shipped_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    received_at DATETIME NULL,
+    tracking_code VARCHAR(100) UNIQUE,
+    status VARCHAR(30) DEFAULT 'IN_TRANSIT',
+
+    CONSTRAINT fk_shipment_centre
+        FOREIGN KEY (centre_id)
+        REFERENCES Collection_Centres(centre_id),
+
+    CONSTRAINT fk_shipment_facility
+        FOREIGN KEY (facility_id)
+        REFERENCES Facilities(facility_id),
+
+    CONSTRAINT fk_shipment_item
+        FOREIGN KEY (item_id)
+        REFERENCES Waste_Items(item_id)
+) ENGINE=InnoDB;
+
+
+-- 13. RECYCLING BATCHES
+CREATE TABLE Recycling_Batches (
+    batch_id INT AUTO_INCREMENT PRIMARY KEY,
+    facility_id INT NOT NULL,
+    batch_code VARCHAR(100) NOT NULL UNIQUE,
+    processed_at DATETIME,
+    status VARCHAR(30) DEFAULT 'PENDING',
+
+    CONSTRAINT fk_batch_facility
+        FOREIGN KEY (facility_id)
+        REFERENCES Facilities(facility_id)
+) ENGINE=InnoDB;
+
+
+-- 14. MATERIALS
+CREATE TABLE Materials (
+    material_id INT AUTO_INCREMENT PRIMARY KEY,
+    material_name VARCHAR(100) NOT NULL UNIQUE,
+    unit VARCHAR(20) DEFAULT 'kg'
+) ENGINE=InnoDB;
+
+
+-- 15. RECOVERED MATERIALS
+CREATE TABLE Recovered_Materials (
+    recovery_id INT AUTO_INCREMENT PRIMARY KEY,
+    batch_id INT NOT NULL,
+    material_id INT NOT NULL,
+    recovered_weight_kg DECIMAL(10,2) NOT NULL,
+    recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_recovered_batch
+        FOREIGN KEY (batch_id)
+        REFERENCES Recycling_Batches(batch_id),
+
+    CONSTRAINT fk_recovered_material
+        FOREIGN KEY (material_id)
+        REFERENCES Materials(material_id),
+
+    CONSTRAINT uq_batch_material
+        UNIQUE (batch_id, material_id),
+
+    CONSTRAINT chk_recovered_weight
+        CHECK (recovered_weight_kg > 0)
+) ENGINE=InnoDB;
+
+
+-- Verify
+SHOW TABLES;
+
+
+ALTER TABLE Waste_Items
+ADD COLUMN batch_id INT NULL;
+
+ALTER TABLE Waste_Items
+ADD CONSTRAINT fk_waste_batch
+FOREIGN KEY (batch_id)
+REFERENCES Recycling_Batches(batch_id);
+
+SHOW TABLES;
+
+SELECT COUNT(*) AS total_tables
+FROM information_schema.tables
+WHERE table_schema = 'EcoCycle';
+
