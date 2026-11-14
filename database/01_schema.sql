@@ -127,3 +127,82 @@ SHOW TABLES;
 DESCRIBE Users;
 DESCRIBE Collectors;
 DESCRIBE Waste_Items;
+
+
+
+USE EcoCycle;
+
+-- 9. PICKUP REQUESTS
+CREATE TABLE Pickup_Requests (
+    request_id INT AUTO_INCREMENT PRIMARY KEY,
+    item_id INT NOT NULL UNIQUE,
+    centre_id INT NOT NULL,
+    requested_date DATE NOT NULL,
+    preferred_slot VARCHAR(50),
+    status VARCHAR(30) DEFAULT 'PENDING',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_request_item
+        FOREIGN KEY (item_id)
+        REFERENCES Waste_Items(item_id),
+
+    CONSTRAINT fk_request_centre
+        FOREIGN KEY (centre_id)
+        REFERENCES Collection_Centres(centre_id)
+) ENGINE=InnoDB;
+
+
+-- 10. PICKUP ASSIGNMENTS
+CREATE TABLE Pickup_Assignments (
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    request_id INT NOT NULL,
+    collector_id INT NOT NULL,
+    assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    collected_at DATETIME NULL,
+    actual_weight_kg DECIMAL(10,2),
+    status VARCHAR(30) DEFAULT 'ASSIGNED',
+
+    CONSTRAINT fk_assignment_request
+        FOREIGN KEY (request_id)
+        REFERENCES Pickup_Requests(request_id),
+
+    CONSTRAINT fk_assignment_collector
+        FOREIGN KEY (collector_id)
+        REFERENCES Collectors(collector_id),
+
+    CONSTRAINT chk_actual_weight
+        CHECK (
+            actual_weight_kg IS NULL
+            OR actual_weight_kg > 0
+        )
+) ENGINE=InnoDB;
+
+
+-- 11. INVENTORY
+CREATE TABLE Inventory (
+    inventory_id INT AUTO_INCREMENT PRIMARY KEY,
+    centre_id INT NOT NULL,
+    item_id INT NOT NULL UNIQUE,
+    received_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    current_weight_kg DECIMAL(10,2) NOT NULL,
+    inventory_status VARCHAR(30) DEFAULT 'AVAILABLE',
+
+    CONSTRAINT fk_inventory_centre
+        FOREIGN KEY (centre_id)
+        REFERENCES Collection_Centres(centre_id),
+
+    CONSTRAINT fk_inventory_item
+        FOREIGN KEY (item_id)
+        REFERENCES Waste_Items(item_id),
+
+    CONSTRAINT chk_inventory_weight
+        CHECK (current_weight_kg > 0)
+) ENGINE=InnoDB;
+
+
+-- Verify
+SHOW TABLES;
+
+DESCRIBE Pickup_Requests;
+DESCRIBE Pickup_Assignments;
+DESCRIBE Inventory;
