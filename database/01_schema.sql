@@ -1,11 +1,8 @@
-CREATE DATABASE EcoCycle;
-
+CREATE DATABASE IF NOT EXISTS EcoCycle;
 USE EcoCycle;
 
 SELECT DATABASE();
 
-
-USE EcoCycle;
 
 -- 1. ROLES
 CREATE TABLE Roles (
